@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hold On..</title>
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-sub: #6b7280;
+            --error-color: #ef4444;
+            --success-color: #10b981;
+            --border-radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .verification-card {
+            background: var(--card-bg);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 400px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h2 {
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        p.subtitle {
+            color: var(--text-sub);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            color: var(--text-main);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        button {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.85rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        #message {
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            min-height: 1.4em; /* Prevents layout jump */
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .success {
+            color: var(--success-color);
+        }
+
+        .error {
+            color: var(--error-color);
+        }
+
+        @media (max-width: 480px) {
+            .verification-card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="verification-card">
+        <h2> Before you watch ... </h2>
+        <p class="subtitle"> Tell me the name of school and I'll open this lock. 🙂</p>
+
+        <div class="input-group">
+            <label for="verificationCode">Verification Code</label>
+            <input type="text" id="verificationCode" placeholder="Enter code (e.g. secret)" autocomplete="off">
+        </div>
+
+        <button id="verifyBtn" onclick="verifyUser()">Verify</button>
+
+        <div id="message"></div>
+    </div>
+
+    <script>
+ 
+        const TARGET = "f7b6ddd0defd0d103ab83faf0e9b6b308524618df988a877a3836dd342103d1d";
+
+        const inputField = document.getElementById('verificationCode');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const messageDiv = document.getElementById('message');
+
+        inputField.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                verifyUser();
+            }
+        });
+
+        async function verifyUser() {
+            const userInput = inputField.value.trim();
+
+            messageDiv.textContent = "";
+            messageDiv.className = "";
+            messageDiv.style.opacity = "0";
+
+            if (!userInput) {
+                showMessage("Please enter a code.", "error");
+                return;
+            }
+
+            verifyBtn.disabled = true;
+            verifyBtn.textContent = "Verifying...";
+
+            try {
+                const hash = await sha256(userInput);
+
+                if (hash === TARGET) {
+                    showMessage("Verified! Redirecting...", "success");
+                } else {
+                    showMessage("Invalid verification code.", "error");
+                }
+            } catch (error) {
+                console.error(error);
+                showMessage("An error occurred. Please try again.", "error");
+            } finally {
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = "Verify";
+            }
+        }
+
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
+
+        function showMessage(text, type) {
+            messageDiv.textContent = text;
+            messageDiv.className = type;
+            messageDiv.style.opacity = "1";
+        }
+    </script>
+</body>
+</html>
