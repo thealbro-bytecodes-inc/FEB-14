@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>A Special Message for You</title>
     <style>
         :root {
@@ -10,6 +10,10 @@
             --sender-bubble: #262626;
             --text-white: #f5f5f5;
             --accent-blue: #0095f6;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
@@ -20,11 +24,13 @@
             align-items: center;
             height: 100vh;
             margin: 0;
+            overflow: hidden; /* Prevent body scroll, handle inside chat */
         }
 
+        /* Desktop View: Looks like a phone */
         .phone-wrapper {
-            width: 350px;
-            height: 700px;
+            width: 375px; /* Standard iPhone width */
+            height: 750px;
             background-color: var(--bg-black);
             border: 8px solid #333;
             border-radius: 40px;
@@ -35,23 +41,46 @@
             box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
 
+        /* Mobile View: Fills the screen naturally */
+        @media (max-width: 600px) {
+            body {
+                background-color: var(--bg-black); /* Match phone bg */
+            }
+            
+            .phone-wrapper {
+                width: 100%;
+                height: 100%; /* Fill viewport */
+                border: none; /* Remove fake phone frame */
+                border-radius: 0;
+                box-shadow: none;
+            }
+        }
+
         .header {
-            padding: 45px 20px 15px;
+            padding: 20px 20px 15px;
             display: flex;
             align-items: center;
             border-bottom: 1px solid #262626;
+            background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            z-index: 10;
         }
 
         .avatar {
-            width: 32px;
-            height: 32px;
-            background: #333; /* Darker profile pic placeholder */
+            width: 36px;
+            height: 36px;
+            background: #333; 
             border-radius: 50%;
             margin-right: 12px;
             border: 1px solid #444;
+            flex-shrink: 0;
         }
 
-        .username { color: var(--text-white); font-weight: 600; font-size: 14px; }
+        .username { 
+            color: var(--text-white); 
+            font-weight: 600; 
+            font-size: 16px; 
+        }
 
         .chat-area {
             flex: 1;
@@ -60,26 +89,49 @@
             flex-direction: column;
             gap: 12px;
             overflow-y: auto;
-            scrollbar-width: none;
+            scrollbar-width: none; /* Firefox */
+            -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+        }
+
+        .chat-area::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
         }
 
         .message {
             max-width: 80%;
-            padding: 10px 16px;
-            border-radius: 20px;
-            font-size: 14px;
+            padding: 12px 18px;
+            border-radius: 22px;
+            font-size: 15px;
             line-height: 1.5;
             word-wrap: break-word;
-            white-space: pre-wrap; /* Keeps the line breaks from your text */
+            white-space: pre-wrap;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .sender { background-color: var(--sender-bubble); color: var(--text-white); align-self: flex-start; }
-        .receiver { background: linear-gradient(45deg, #af0be3, #5a4cf1); color: white; align-self: flex-end; }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.9) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .sender { 
+            background-color: var(--sender-bubble); 
+            color: var(--text-white); 
+            align-self: flex-start; 
+            border-bottom-left-radius: 4px;
+        }
+        
+        .receiver { 
+            background: linear-gradient(135deg, #af0be3, #5a4cf1); 
+            color: white; 
+            align-self: flex-end; 
+            border-bottom-right-radius: 4px;
+        }
 
         .typing-indicator {
             padding: 12px 16px;
             background-color: var(--sender-bubble);
             border-radius: 20px;
+            border-bottom-left-radius: 4px;
             display: flex;
             gap: 4px;
             width: fit-content;
@@ -103,23 +155,29 @@
         }
 
         .suggestions {
-            padding: 20px;
+            padding: 15px;
             display: flex;
             justify-content: center;
+            background-color: var(--bg-black);
         }
 
         .reply-pill {
-            background: none;
+            background: transparent;
             border: 1px solid #363636;
             color: var(--accent-blue);
-            padding: 8px 24px;
-            border-radius: 18px;
+            padding: 10px 28px;
+            border-radius: 20px;
             cursor: pointer;
+            font-size: 15px;
             font-weight: 600;
-            transition: transform 0.2s;
+            transition: all 0.2s;
         }
 
-        .reply-pill:active { transform: scale(0.95); }
+        .reply-pill:active { 
+            transform: scale(0.95); 
+            background-color: rgba(54, 54, 54, 0.3);
+        }
+        
         .hidden { display: none !important; }
     </style>
 </head>
@@ -142,18 +200,26 @@
     const chatArea = document.getElementById('chatArea');
     const suggestionBox = document.getElementById('suggestionBox');
 
+    // Helper to scroll smoothly to bottom
+    function scrollToBottom() {
+        chatArea.scrollTo({
+            top: chatArea.scrollHeight,
+            behavior: 'smooth'
+        });
+    }
+
     async function typeMessage(text, side, speed = 40) {
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${side}`;
         chatArea.appendChild(msgDiv);
         
-        // Split text to handle characters one by one
         const chars = Array.from(text);
         for (let char of chars) {
             msgDiv.textContent += char;
-            chatArea.scrollTop = chatArea.scrollHeight;
+            chatArea.scrollTop = chatArea.scrollHeight; // Instant scroll while typing
             await new Promise(res => setTimeout(res, speed));
         }
+        scrollToBottom(); // Smooth adjustment at end
     }
 
     function showIndicator() {
@@ -162,7 +228,7 @@
         indicator.id = 'temp-indicator';
         indicator.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
         chatArea.appendChild(indicator);
-        chatArea.scrollTop = chatArea.scrollHeight;
+        scrollToBottom();
     }
 
     function hideIndicator() {
@@ -172,9 +238,9 @@
 
     // Sequence 1: Initial "Hi"
     window.onload = async () => {
-        await new Promise(res => setTimeout(res, 1000));
+        await new Promise(res => setTimeout(res, 800));
         showIndicator();
-        await new Promise(res => setTimeout(res, 1500));
+        await new Promise(res => setTimeout(res, 1200));
         hideIndicator();
         await typeMessage("Hi", "sender");
         suggestionBox.classList.remove('hidden');
@@ -189,8 +255,8 @@
         await new Promise(res => setTimeout(res, 1000));
         showIndicator();
         
-        // Longer typing time for a longer message
-        await new Promise(res => setTimeout(res, 3000));
+        // Simulating thinking time
+        await new Promise(res => setTimeout(res, 2500));
         hideIndicator();
         
         const longMessage = `Hi Namitha 🎀
@@ -204,7 +270,7 @@ I’m not from your college. If you find me, do reach out.
                                      — um homem clássico
                                        (PS: Not a username)`;
 
-        await typeMessage(longMessage, "sender", 30); // Slightly faster typing for long text
+        await typeMessage(longMessage, "sender", 30); 
     }
 </script>
 
