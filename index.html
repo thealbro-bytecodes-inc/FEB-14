@@ -134,7 +134,7 @@
 
     <div class="verification-card">
         <h2> Before you watch ... </h2>
-        <p class="subtitle"> Tell me the name of school and I'll open this lock. 🙂</p>
+        <p class="subtitle"> Tell me the name of school and I'll open this lock. <br> <i> use all caps for the schoool </i> 🙂</p>
 
         <div class="input-group">
             <label for="verificationCode">Verification Code</label>
@@ -148,7 +148,7 @@
 
     <script>
  
-        const TARGET = "f7b6ddd0defd0d103ab83faf0e9b6b308524618df988a877a3836dd342103d1d";
+        const TARGET = "d39311754927d997cf575db225ed513686014030de057b291b62e94ca440ecf4";
 
         const inputField = document.getElementById('verificationCode');
         const verifyBtn = document.getElementById('verifyBtn');
@@ -180,16 +180,24 @@
 
                 if (hash === TARGET) {
                     showMessage("Verified! Redirecting...", "success");
+                    
+                    // --- REDIRECTION LOGIC ---
+                    setTimeout(function() {
+                        window.location.href = "chat.html";
+                    }, 1500); // 1.5 second delay before jump
+                    
                 } else {
                     showMessage("Invalid verification code.", "error");
+                    // Re-enable button immediately on error
+                    verifyBtn.disabled = false;
+                    verifyBtn.textContent = "Verify";
                 }
             } catch (error) {
                 console.error(error);
                 showMessage("An error occurred. Please try again.", "error");
-            } finally {
                 verifyBtn.disabled = false;
                 verifyBtn.textContent = "Verify";
-            }
+            } 
         }
 
         async function sha256(message) {
@@ -207,5 +215,4 @@
         }
     </script>
 </body>
-
 </html>
