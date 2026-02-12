@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>A Special Message for You</title>
     <style>
         :root {
@@ -16,20 +16,25 @@
             box-sizing: border-box;
         }
 
+        html, body {
+            height: 100%; /* Fallback */
+            height: 100dvh; /* Dynamic Viewport Height for mobile */
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent overall page scroll */
+        }
+
         body {
             background-color: #1a1a1a;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden; /* Prevent body scroll, handle inside chat */
         }
 
         /* Desktop View: Looks like a phone */
         .phone-wrapper {
-            width: 375px; /* Standard iPhone width */
+            width: 375px;
             height: 750px;
             background-color: var(--bg-black);
             border: 8px solid #333;
@@ -44,13 +49,14 @@
         /* Mobile View: Fills the screen naturally */
         @media (max-width: 600px) {
             body {
-                background-color: var(--bg-black); /* Match phone bg */
+                background-color: var(--bg-black);
             }
             
             .phone-wrapper {
                 width: 100%;
-                height: 100%; /* Fill viewport */
-                border: none; /* Remove fake phone frame */
+                height: 100%;
+                height: 100dvh; /* Force full height on mobile */
+                border: none;
                 border-radius: 0;
                 box-shadow: none;
             }
@@ -64,6 +70,8 @@
             background-color: rgba(0,0,0,0.8);
             backdrop-filter: blur(10px);
             z-index: 10;
+            /* Handle notch on iPhones */
+            padding-top: max(20px, env(safe-area-inset-top)); 
         }
 
         .avatar {
@@ -83,18 +91,18 @@
         }
 
         .chat-area {
-            flex: 1;
+            flex: 1; /* Takes all available space */
             padding: 20px;
             display: flex;
             flex-direction: column;
             gap: 12px;
             overflow-y: auto;
-            scrollbar-width: none; /* Firefox */
-            -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
         }
 
         .chat-area::-webkit-scrollbar {
-            display: none; /* Chrome/Safari */
+            display: none;
         }
 
         .message {
@@ -155,10 +163,14 @@
         }
 
         .suggestions {
+            /* Ensure it stays at the bottom */
+            flex-shrink: 0; 
             padding: 15px;
             display: flex;
             justify-content: center;
             background-color: var(--bg-black);
+            /* Handle iPhone Home Indicator area */
+            padding-bottom: max(15px, env(safe-area-inset-bottom));
         }
 
         .reply-pill {
@@ -186,7 +198,7 @@
 <div class="phone-wrapper">
     <div class="header">
         <div class="avatar"></div>
-        <div class="username">@find_me_out 🙂</div>
+        <div class="username">@um_homem_classico🙂</div>
     </div>
 
     <div class="chat-area" id="chatArea"></div>
@@ -200,7 +212,6 @@
     const chatArea = document.getElementById('chatArea');
     const suggestionBox = document.getElementById('suggestionBox');
 
-    // Helper to scroll smoothly to bottom
     function scrollToBottom() {
         chatArea.scrollTo({
             top: chatArea.scrollHeight,
@@ -216,10 +227,11 @@
         const chars = Array.from(text);
         for (let char of chars) {
             msgDiv.textContent += char;
-            chatArea.scrollTop = chatArea.scrollHeight; // Instant scroll while typing
+            // Scroll immediately to keep latest text in view
+            chatArea.scrollTop = chatArea.scrollHeight;
             await new Promise(res => setTimeout(res, speed));
         }
-        scrollToBottom(); // Smooth adjustment at end
+        scrollToBottom(); 
     }
 
     function showIndicator() {
@@ -243,7 +255,10 @@
         await new Promise(res => setTimeout(res, 1200));
         hideIndicator();
         await typeMessage("Hi", "sender");
+        
+        // Ensure suggestion box is visible
         suggestionBox.classList.remove('hidden');
+        scrollToBottom(); // Ensure we scroll down to see the button
     };
 
     // Sequence 2: The big reveal
@@ -255,7 +270,6 @@
         await new Promise(res => setTimeout(res, 1000));
         showIndicator();
         
-        // Simulating thinking time
         await new Promise(res => setTimeout(res, 2500));
         hideIndicator();
         
