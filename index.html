@@ -181,14 +181,14 @@
                 if (hash === TARGET) {
                     showMessage("Verified! Redirecting...", "success");
                     
-                    // --- REDIRECTION LOGIC ---
+                    
                     setTimeout(function() {
                         window.location.href = "chat.html";
-                    }, 1500); // 1.5 second delay before jump
+                    }, 1500); 
                     
                 } else {
                     showMessage("Invalid verification code.", "error");
-                    // Re-enable button immediately on error
+                    // Re-enable button
                     verifyBtn.disabled = false;
                     verifyBtn.textContent = "Verify";
                 }
@@ -216,3 +216,4 @@
     </script>
 </body>
 </html>
+
